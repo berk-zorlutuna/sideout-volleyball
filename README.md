@@ -15,3 +15,12 @@ Open `index.html` in a browser. It is a single file; three.js and the fonts load
 | Jump | Space | Jump button |
 | Aim | Hold a direction as you hit | Hold the stick as you hit |
 | Pause | P | Pause button |
+
+## Documentation
+
+- [System requirements](docs/system-requirements.md)
+- [Software requirements](docs/software-requirements.md)
+- [Software verification cases](docs/verification-cases.md)
+- [Software verification results](docs/verification-results.md)
+
+The verification cases are automated in `tests/verify.js`.
