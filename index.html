@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sideout">
+<meta name="theme-color" content="#08111c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Sideout Volleyball</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;1,700;1,800&family=Barlow:wght@400;500;600&display=swap">
@@ -18,7 +25,7 @@
   color-scheme:dark;
 }
 html,body{height:100%}
-body{background:var(--ink);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+body{background:var(--ink);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;overflow:hidden;touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 #view{position:fixed;inset:0;width:100%;height:100%;display:block}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,label:focus-within{outline:2px solid var(--gold);outline-offset:2px}
@@ -67,8 +74,16 @@ button:focus-visible,label:focus-within{outline:2px solid var(--gold);outline-of
 #tJump{right:calc(104px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 #touch button:active{background:rgba(255,210,63,.3)}
 body.touch #hint{margin-bottom:150px}
+@media (min-width:700px) and (min-height:560px){
+  #touch button{width:100px;height:100px;font-size:27px}
+  #tHit{right:calc(26px + env(safe-area-inset-right,0px));bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+  #tJump{right:calc(140px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+  #base{width:132px;height:132px;margin-left:-66px;left:calc(96px + env(safe-area-inset-left,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+  #knob{width:58px;height:58px;margin-left:-29px;left:calc(96px + env(safe-area-inset-left,0px));bottom:calc(67px + env(safe-area-inset-bottom,0px))}
+  body.touch #hint{margin-bottom:0;font-size:16px}
+}
 
-.overlay{position:fixed;inset:0;display:flex;align-items:center;overflow:auto;
+.overlay{position:fixed;inset:0;display:flex;align-items:center;overflow:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;
   background:linear-gradient(90deg,rgba(8,17,28,.94) 0%,rgba(8,17,28,.8) 46%,rgba(8,17,28,.25) 100%);
   padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(20px + env(safe-area-inset-bottom,0px));
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -178,8 +193,8 @@ const DIFF={
   allstar:{speed:6.1,passErr:.3,setErr:.25,spikeErr:.6,spikeSpeed:19.5,block:.8,blockSlop:.25,shank:.08,netErr:.03,serveErr:.55,serveT:1.08,smartN:2,judge:.97}
 };
 let diffKey='rookie',cfg=DIFF.rookie;
-const isTouch=matchMedia('(pointer:coarse)').matches;
-if(isTouch)document.body.classList.add('touch');
+// iPadOS Safari identifies as a Mac, so a coarse pointer alone is not a reliable test; the first real touch also switches modes.
+let isTouch=matchMedia('(pointer:coarse)').matches||(/Mac|iPad|iPhone/.test(navigator.platform||'')&&navigator.maxTouchPoints>1);
 
 /* ---------- scene ---------- */
 const renderer=new T.WebGLRenderer({canvas:$('view'),antialias:true});
@@ -586,8 +601,7 @@ function draw(dt){
 }
 
 /* ---------- HUD ---------- */
-const HIT=isTouch?'<b>Hit</b>':'<b>J</b>',JMP=isTouch?'<b>Jump</b>':'<b>Space</b>',LR=isTouch?'the stick':'<b>◀ ▶</b>';
-let hintTxt='',pipN=-1;
+let HIT,JMP,LR,hintTxt='',pipN=-1;
 function hintTick(){
   let t='';
   if(!demo&&!paused){
@@ -617,9 +631,19 @@ function showOver(){
   const won=home.sets>away.sets;$('overTitle').textContent=won?'You win '+home.sets+'–'+away.sets:'CPU wins '+away.sets+'–'+home.sets;
   $('overSets').textContent=setLog.join('   ');$('over').hidden=false;$('tools').hidden=true;
 }
-const keyRows=isTouch?[['Move','Left stick'],['Hit / serve','Hit button'],['Jump','Jump button'],['Aim','Hold the stick as you hit']]
-  :[['Move','<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrows'],['Hit / serve','<kbd>J</kbd> or <kbd>Enter</kbd>'],['Jump','<kbd>Space</kbd>'],['Aim','Hold a direction as you hit'],['Pause','<kbd>P</kbd>']];
-$('keys').innerHTML=$('keys2').innerHTML=keyRows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');
+function applyTouchMode(){
+  document.body.classList.toggle('touch',isTouch);
+  HIT=isTouch?'<b>Hit</b>':'<b>J</b>';JMP=isTouch?'<b>Jump</b>':'<b>Space</b>';LR=isTouch?'the stick':'<b>◀ ▶</b>';hintTxt='';
+  const keyRows=isTouch?[['Move','Left stick'],['Hit / serve','Hit button'],['Jump','Jump button'],['Aim','Hold the stick as you hit']]
+    :[['Move','<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrows'],['Hit / serve','<kbd>J</kbd> or <kbd>Enter</kbd>'],['Jump','<kbd>Space</kbd>'],['Aim','Hold a direction as you hit'],['Pause','<kbd>P</kbd>']];
+  $('keys').innerHTML=$('keys2').innerHTML=keyRows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');
+}
+applyTouchMode();
+addEventListener('touchstart',()=>{if(isTouch)return;isTouch=true;applyTouchMode();if(!demo&&state!=='over')$('touch').hidden=false;},{passive:true});
+// Safari: stop pinch-zoom and rubber-band scrolling outside the menus, and wake audio after an interruption.
+['gesturestart','gesturechange'].forEach(n=>document.addEventListener(n,e=>e.preventDefault()));
+document.addEventListener('touchmove',e=>{if(!(e.target.closest&&e.target.closest('.overlay')))e.preventDefault();},{passive:false});
+addEventListener('pointerdown',()=>{if(ac&&ac.state==='suspended')ac.resume();});
 $('touch').hidden=true;
 
 /* ---------- input ---------- */

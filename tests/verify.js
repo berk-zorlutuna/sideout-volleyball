@@ -153,6 +153,37 @@ async function serveAt(page, lo, hi) {
   rec('VC-27', errors.length === 0, 'page errors on phone: ' + errors.length);
   await ctx.close();
 
+  /* ---- iPad (desktop-class Safari user agent, touch, no coarse-pointer hint) ---- */
+  const IPAD_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
+  ({ ctx, page, errors } = await open(browser, { viewport: { width: 1194, height: 834 }, hasTouch: true, userAgent: IPAD_UA, deviceScaleFactor: 2 }));
+  await page.tap('#btnStart'); await page.waitForTimeout(300);
+  await page.waitForFunction(() => !document.getElementById('meter').hidden, null, { timeout: 15000 });
+  const ip = await page.evaluate(() => { const r = id => document.getElementById(id).getBoundingClientRect(), hit = r('tHit'), jmp = r('tJump'), hint = r('hint'), W = innerWidth, H = innerHeight;
+    const inside = q => q.left >= 0 && q.top >= 0 && q.right <= W && q.bottom <= H && q.width > 0, apart = (a, b) => a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+    return { touchClass: document.body.classList.contains('touch'), hint: document.getElementById('hint').textContent, inside: inside(hit) && inside(jmp) && inside(hint),
+      apart: apart(hit, jmp) && apart(hit, hint) && apart(jmp, hint), size: Math.round(hit.width), sw: document.documentElement.scrollWidth, W }; });
+  rec('VC-28', ip.touchClass && await vis(page, '#tHit') && await vis(page, '#stick') && /press Hit/.test(ip.hint), `touch mode=${ip.touchClass}, hint "${ip.hint}"`);
+  rec('VC-29', ip.inside && ip.apart && ip.size >= 88 && ip.sw <= ip.W, `controls inside viewport=${ip.inside}, no overlap=${ip.apart}, Hit button ${ip.size}px, scrollWidth ${ip.sw}/${ip.W}`);
+  await page.screenshot({ path: process.env.SHOT || '/dev/null' }).catch(() => {});
+  // two fingers at once: drag the stick left with one pointer, tap Hit with another
+  const mt = await page.evaluate(async () => { const s = __sideout, st = document.getElementById('stick'), r = st.getBoundingClientRect(), x0 = s.home.players[0].x;
+    const ev = (el, t, id, x, y) => el.dispatchEvent(new PointerEvent(t, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y, bubbles: true }));
+    ev(st, 'pointerdown', 11, r.left + 120, r.top + 200); ev(st, 'pointermove', 11, r.left + 60, r.top + 200);
+    s.step(40); const x1 = s.home.players[0].x;
+    ev(document.getElementById('tHit'), 'pointerdown', 12, 0, 0); const state = s.state; s.step(5);
+    ev(st, 'pointerup', 11, r.left + 60, r.top + 200); return { x0, x1, state }; });
+  rec('VC-30', mt.x1 < mt.x0 - 0.5 && mt.state === 'rally', `server x ${mt.x0.toFixed(2)} -> ${mt.x1.toFixed(2)} while stick held, state after Hit=${mt.state}`);
+  await page.setViewportSize({ width: 834, height: 1194 }); await page.waitForTimeout(300);
+  const pr = await page.evaluate(() => { const c = document.getElementById('view'), r = id => document.getElementById(id).getBoundingClientRect(), h = r('tHit');
+    return { cw: c.clientWidth, ch: c.clientHeight, W: innerWidth, H: innerHeight, sw: document.documentElement.scrollWidth, hitIn: h.right <= innerWidth && h.bottom <= innerHeight }; });
+  rec('VC-31', pr.cw === pr.W && pr.ch === pr.H && pr.sw <= pr.W && pr.hitIn, `after rotating to portrait: canvas ${pr.cw}x${pr.ch} in ${pr.W}x${pr.H}, Hit inside=${pr.hitIn}`);
+  const heads = await page.evaluate(() => ({ cap: !!document.querySelector('meta[name="apple-mobile-web-app-capable"][content="yes"]'), icon: !!document.querySelector('link[rel="apple-touch-icon"]'),
+    man: !!document.querySelector('link[rel="manifest"]'), vp: document.querySelector('meta[name="viewport"]').content }));
+  const files = ['manifest.webmanifest', 'icon-180.png', 'icon-512.png'].every(f => fs.existsSync(path.resolve(__dirname, '..', f)));
+  rec('VC-32', heads.cap && heads.icon && heads.man && /user-scalable=no/.test(heads.vp) && /viewport-fit=cover/.test(heads.vp) && files, `home-screen meta=${heads.cap}, icon link=${heads.icon}, manifest link=${heads.man}, files present=${files}`);
+  rec('VC-33', errors.length === 0, 'page errors on iPad profile: ' + errors.length + (errors[0] ? ' ' + errors[0] : ''));
+  await ctx.close();
+
   await browser.close();
   const out = { date: new Date().toISOString(), browser: 'Chromium ' + browser.version(), soak, results };
   if (process.env.RESULTS) fs.writeFileSync(process.env.RESULTS, JSON.stringify(out, null, 2));

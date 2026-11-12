@@ -6,7 +6,7 @@ Derived from [system-requirements.md](system-requirements.md). The "Trace" colum
 
 | ID | Requirement | Trace |
 |---|---|---|
-| SWR-01 | The game shall be one HTML file that loads three.js r128 from cdnjs and needs no other script. | SYS-09 |
+| SWR-01 | The game shall be one HTML file that loads three.js r128 from cdnjs and needs no other script. The manifest and icons are optional extras for home-screen installation. | SYS-09 |
 | SWR-02 | The scene shall contain an 18 × 9 court with boundary, centre and 3 m attack lines, a net with its top at 2.43, posts and antennas. | SYS-02 |
 | SWR-03 | Each team shall have six players, assigned to rotation positions 1 to 6 (three front row, three back row). | SYS-01 |
 | SWR-04 | On load the game shall show the menu over a computer-versus-computer match, with the scoreboard hidden. | SYS-06 |
@@ -53,5 +53,12 @@ Derived from [system-requirements.md](system-requirements.md). The "Trace" colum
 | SWR-30 | Sound effects shall be synthesised in the browser, start only after the user presses Start, and stop when the user selects Sound off. | SYS-08 |
 | SWR-31 | At 400 px wide the page shall not scroll horizontally and all menu controls shall be inside the viewport. The camera distance shall adapt to the aspect ratio so the full court width is visible. | SYS-11 |
 | SWR-32 | On coarse-pointer devices the game shall show a movement stick and Hit and Jump buttons during a match. | SYS-10 |
+| SWR-35 | The game shall switch to touch controls and touch wording on the first touch, even when the browser reports a desktop user agent and no coarse pointer (as iPadOS Safari does). | SYS-14 |
+| SWR-36 | The stick and the Hit and Jump buttons shall work at the same time with separate fingers. | SYS-10, SYS-14 |
+| SWR-37 | On viewports at least 700 px wide and 560 px high the touch buttons shall be at least 88 px across, lie inside the viewport, and not overlap each other or the hint. | SYS-14 |
+| SWR-38 | The view shall refit when the device is rotated between landscape and portrait. | SYS-14 |
+| SWR-39 | The page shall prevent pinch-zoom, double-tap zoom and rubber-band scrolling during play, while leaving the menus scrollable. | SYS-14 |
+| SWR-40 | The page shall declare itself as a home-screen web app (full-screen capable, with an app icon and a web manifest) and keep its controls clear of the safe-area insets. | SYS-14 |
+| SWR-41 | Audio shall resume on the next touch if the browser has suspended it. | SYS-08, SYS-14 |
 | SWR-33 | The game shall raise no uncaught script errors. | SYS-12 |
 | SWR-34 | The game should render at 30 frames per second or better on a typical current laptop or phone. | SYS-13 |

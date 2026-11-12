@@ -65,6 +65,19 @@ The state is checked after every frame.
 | VC-26 | SWR-32, SWR-10 | Tap Start match, wait for the meter, tap Hit. | Stick, Hit and Jump are visible; state becomes rally. |
 | VC-27 | SWR-33 | Error log. | No uncaught error. |
 
+## E. iPad profile (1194 × 834 at 2× scale, touch, Safari-on-Mac user agent)
+
+This is Chromium emulating an iPad's viewport, touch input and user agent. It is not Safari and not a device.
+
+| ID | Verifies | Procedure | Pass criterion |
+|---|---|---|---|
+| VC-28 | SWR-35, SWR-32 | Tap Start match, wait for the meter. | Touch mode is on, stick and Hit are visible, hint says "press Hit". |
+| VC-29 | SWR-37, SWR-31 | Measure Hit, Jump and the hint. | All inside the viewport, none overlapping, Hit at least 88 px, no horizontal overflow. |
+| VC-30 | SWR-36 | Hold the stick left with one pointer for 40 frames, then press Hit with a second pointer. | Server's x decreases by more than 0.5 and the state becomes rally. |
+| VC-31 | SWR-38 | Change the viewport to 834 × 1194. | Canvas fills the new viewport, no horizontal overflow, Hit inside the viewport. |
+| VC-32 | SWR-40 | Inspect the page head and the repository. | Home-screen meta tag, icon link and manifest link present; viewport disables zoom and covers the safe area; manifest and both icons exist. |
+| VC-33 | SWR-33 | Error log. | No uncaught error. |
+
 ## Requirements with no verification case
 
 | Requirement | Why |
@@ -79,3 +92,6 @@ The state is checked after every frame.
 | SWR-25 floor ring, SWR-27 banner | Not asserted. |
 | SWR-30 audio output | Only the button label is checked; no sound is captured. |
 | SWR-34 frame rate | Headless software rendering says nothing about real devices. |
+| SWR-39 zoom and scroll suppression | These are Safari gestures; they cannot be produced in Chromium. |
+| SWR-40 safe-area insets, installed full-screen behaviour | Needs a real iPad. Only the declarations are checked (VC-32). |
+| SWR-41 audio resume | No audio device in the test. |

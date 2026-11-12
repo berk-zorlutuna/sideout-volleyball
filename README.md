@@ -6,6 +6,12 @@ A 3D, six-a-side indoor volleyball game that runs in the browser. You play the b
 
 Open `index.html` in a browser. It is a single file; three.js and the fonts load from a CDN, so it needs an internet connection.
 
+## Play on iPad
+
+The page has to be served over the web; Safari on iPad cannot open the file from the repository directly. Once it is hosted (for example with GitHub Pages), open the address in Safari. For a full-screen app, tap Share, then Add to Home Screen.
+
+Touch controls appear automatically: a stick under your left thumb, Hit and Jump under your right. Landscape gives the best view. A hardware keyboard also works.
+
 ## Controls
 
 | Action | Keyboard | Touch |
