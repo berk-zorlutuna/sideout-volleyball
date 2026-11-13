@@ -146,7 +146,7 @@ kbd{font-family:var(--body);font-size:12px;font-weight:600;border:1px solid var(
   <div class="card">
     <p class="eyebrow">Indoor 6 v 6 · best of 3 · sets to 15</p>
     <h1>Side<em>out</em></h1>
-    <p>You play every touch for the blue side: pass, set, spike and block. The ring on the floor shows where the ball comes down. Your player walks there if you let go of the controls.</p>
+    <p>You play every touch for the blue side: pass, set, spike and block. The ring on the floor shows where the ball comes down. Your player walks there on their own, so the timing of Hit is what matters.</p>
     <fieldset class="seg">
       <legend>Opponent</legend>
       <label><input type="radio" name="diff" id="dRookie" value="rookie" checked><b>Rookie</b><small>Loose passes</small></label>
@@ -188,9 +188,9 @@ const lerp=(a,b,t)=>a+(b-a)*t;
 // Court: 18 x 9 m, net 2.43 m. +z is the player's half, the camera looks toward -z.
 const G=9.81,R=0.13,NET_H=2.43,CW=4.5,CL=9,PG=14,JUMP=5.4,SET_PTS=15;
 const DIFF={
-  rookie:{speed:4.7,passErr:.9,setErr:.7,spikeErr:1.3,spikeSpeed:13.5,block:.25,blockSlop:.9,shank:.3,netErr:.12,serveErr:1.3,serveT:1.5,smartN:15,judge:.6},
-  pro:{speed:5.4,passErr:.55,setErr:.4,spikeErr:.9,spikeSpeed:16.5,block:.55,blockSlop:.5,shank:.16,netErr:.07,serveErr:.85,serveT:1.25,smartN:5,judge:.85},
-  allstar:{speed:6.1,passErr:.3,setErr:.25,spikeErr:.6,spikeSpeed:19.5,block:.8,blockSlop:.25,shank:.08,netErr:.03,serveErr:.55,serveT:1.08,smartN:2,judge:.97}
+  rookie:{speed:4.7,passErr:.9,setErr:.7,spikeErr:1.3,spikeSpeed:13.5,block:.25,blockSlop:.9,shank:.3,netErr:.12,serveErr:1.3,serveT:1.5,smartN:15,judge:.6,react:.32,digReach:.95},
+  pro:{speed:5.4,passErr:.55,setErr:.4,spikeErr:.9,spikeSpeed:16.5,block:.55,blockSlop:.5,shank:.16,netErr:.07,serveErr:.85,serveT:1.25,smartN:5,judge:.85,react:.22,digReach:1.1},
+  allstar:{speed:6.1,passErr:.3,setErr:.25,spikeErr:.6,spikeSpeed:19.5,block:.8,blockSlop:.25,shank:.08,netErr:.03,serveErr:.55,serveT:1.08,smartN:2,judge:.97,react:.13,digReach:1.25}
 };
 let diffKey='rookie',cfg=DIFF.rookie;
 // iPadOS Safari identifies as a Mac, so a coarse pointer alone is not a reliable test; the first real touch also switches modes.
@@ -354,6 +354,7 @@ function makePlan(){
       if(d<bd){bd=d;pl.player=p;}});
     if(team.ai&&count===0&&pl.out&&ball.lastTeam!==team&&Math.random()<cfg.judge)pl.player=null;
   }
+  pl.moveAt=now+(team.ai&&ball.attack?cfg.react:0); // defenders need a moment to read a spike
   plan=pl;
   home.blocker=away.blocker=null;
   const def=other(team);
@@ -362,9 +363,11 @@ function makePlan(){
 }
 
 /* ---------- contacts ---------- */
-function canContact(p){
+function canContact(p,human){
   if(ball.side!==p.team.side||ball.touches>=3||p===ball.lastToucher)return false;
-  const dy=ball.y-p.y;return dy>.15&&dy<2.65&&Math.hypot(ball.x-p.x,ball.z-p.z)<1.25;
+  // the user gets a longer reach; the computer's reach shrinks against a driven ball
+  const reach=human?1.45:ball.attack?cfg.digReach:1.25,dy=ball.y-p.y;
+  return dy>.15&&dy<2.65&&Math.hypot(ball.x-p.x,ball.z-p.z)<reach;
 }
 function pickGap(team){
   const s=team.side,def=other(team).players,c=[];
@@ -398,7 +401,7 @@ function contact(p,human){
   }else{
     let tx,depth,speed,margin;
     if(human){tx=ax?ax*3.5:clamp(ball.x*.5+rand(-1.2,1.2),-3.8,3.8);depth=fwd?7.9:back?2.4:rand(4.8,6.8);
-      speed=back?9:lerp(13,22.5,clamp((ball.y-2.5)/.8,0,1));margin=.1-Math.max(0,d-.8)*.5;}
+      speed=back?9:lerp(15.5,23,clamp((ball.y-2.5)/.8,0,1));margin=.1-Math.max(0,d-.8)*.5;}
     else{const k=pickGap(team);tx=k[0];depth=k[1];speed=cfg.spikeSpeed*rand(.9,1.05);
       if(Math.random()<.12){depth=2.3;speed=9;}margin=Math.random()<cfg.netErr?-.3:.1;}
     tx+=ex;const tz=-s*depth+ez*1.2;
@@ -428,7 +431,7 @@ function aiAct(team){
   if(plan.team===team){
     const p=plan.player;if(!p||!plan.I)return;const tl=plan.I.t-now;
     if(plan.h>=3&&plan.count===2&&p.y<=0&&tl<=.36&&tl>.1&&Math.hypot(p.x-plan.I.x,p.z-plan.I.z)<1.3)p.vy=JUMP;
-    if(tl<=.02&&canContact(p))contact(p,false);
+    if(tl<=.02&&canContact(p,false))contact(p,false);
   }else{
     const b=team.blocker;
     if(b&&team.blockWill&&b.y<=0&&plan.count===2&&plan.h>=3&&plan.I){const tl=plan.I.t-now;if(tl<=.28&&tl>.05&&Math.abs(b.x-team.blockX)<.9)b.vy=JUMP;}
@@ -519,16 +522,18 @@ function movePlayers(dt){
     team.players.forEach((p,i)=>{
       const bp=basePos(team,i);let tx=bp[0],tz=bp[1],spd=team===home?6:cfg.speed;
       if(state==='rally'&&plan){
-        if(plan.player===p&&plan.I){tx=plan.I.x;tz=plan.I.z+(plan.h>=3?s*.3:0);}
+        if(plan.player===p&&plan.I){if(team.ai&&now<plan.moveAt){tx=p.x;tz=p.z;}else{tx=plan.I.x;tz=plan.I.z+(plan.h>=3?s*.3:0);}}
         else if(team.blocker===p){tx=team.blockX;tz=s*.85;}
       }
       const ox=p.x,oz=p.z,ctl=p.y>0?.35:1;
       const servingMe=state==='serve'&&team===serving&&i===0;
-      if(p===ctrl&&im>.15&&!(servingMe&&!serveReadyAt)){
+      // Once the user's player is under the ball, direction input only aims; it no longer walks them off the spot.
+      const planted=p===ctrl&&state==='rally'&&plan&&plan.player===p&&plan.I&&(p.swingT>0||(plan.I.t-now<.8&&Math.hypot(p.x-plan.I.x,p.z-plan.I.z)<1.1));
+      if(p===ctrl&&im>.15&&!planted&&!(servingMe&&!serveReadyAt)){
         if(servingMe){p.x=clamp(p.x+input.x*4*dt,-4.3,4.3);team.serveX=p.x;}
         else{const k=6.2*ctl*dt/Math.max(1,im);p.x+=input.x*k;p.z+=input.z*k;}
       }else{
-        if(p===ctrl)spd*=.85;
+        if(p===ctrl)spd=6.2;
         const dx=tx-p.x,dz=tz-p.z,d=Math.hypot(dx,dz);
         if(d>.04){const st=Math.min(d,spd*ctl*dt);p.x+=dx/d*st;p.z+=dz/d*st;}
       }
@@ -564,7 +569,11 @@ function rallyStep(h){
   if(ev){if(ev==='net')ball.netHit=true;sfx.net();makePlan();}
   const sd=ball.z>=0?1:-1;if(sd!==ball.side){ball.side=sd;ball.touches=0;ball.lastToucher=null;}
   if(ball.attack)tryBlock();
-  if(ctrl&&ctrl.swingT>0&&canContact(ctrl))contact(ctrl,true);
+  if(ctrl&&ctrl.auto){ // one-button attack: jump on time, then swing
+    if(ctrl.auto!==plan)ctrl.auto=null;
+    else if(ctrl.y<=0&&ctrl.vy===0&&plan.I.t-now<=.36)ctrl.vy=JUMP;
+  }
+  if(ctrl&&ctrl.swingT>0&&canContact(ctrl,true))contact(ctrl,true);
   for(const t of teams)if(t.ai)aiAct(t);
   if(ball.y<=R){ball.y=R;landed();}
 }
@@ -610,7 +619,7 @@ function hintTick(){
       if(plan.team===home){
         if(plan.count===0)t=plan.out?'Red ring: it is going out. Let it drop.':'Receive: get under the ring and press '+HIT+'.';
         else if(plan.count===1)t='Set: hold '+LR+' to pick a hitter, then '+HIT+'.';
-        else if(plan.count===2)t=plan.h>=3?'Attack: '+JMP+' when the ring turns green, then '+HIT+'. Hold a direction to aim.':'Send it over with '+HIT+'.';
+        else if(plan.count===2)t=plan.h>=3?'Attack: press '+HIT+' as the ring turns green. Your player jumps and swings. Hold a direction to aim.':'Send it over with '+HIT+'.';
       }else t=plan.count>=1?'Block: line up at the net and '+JMP+' as they swing.':'Their ball. Get to the net to block.';
     }
   }
@@ -634,8 +643,8 @@ function showOver(){
 function applyTouchMode(){
   document.body.classList.toggle('touch',isTouch);
   HIT=isTouch?'<b>Hit</b>':'<b>J</b>';JMP=isTouch?'<b>Jump</b>':'<b>Space</b>';LR=isTouch?'the stick':'<b>◀ ▶</b>';hintTxt='';
-  const keyRows=isTouch?[['Move','Left stick'],['Hit / serve','Hit button'],['Jump','Jump button'],['Aim','Hold the stick as you hit']]
-    :[['Move','<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrows'],['Hit / serve','<kbd>J</kbd> or <kbd>Enter</kbd>'],['Jump','<kbd>Space</kbd>'],['Aim','Hold a direction as you hit'],['Pause','<kbd>P</kbd>']];
+  const keyRows=isTouch?[['Move','Left stick'],['Hit / serve','Hit button'],['Block','Jump button, at the net'],['Aim','Hold the stick as you hit']]
+    :[['Move','<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or arrows'],['Hit / serve','<kbd>J</kbd> or <kbd>Enter</kbd>'],['Block','<kbd>Space</kbd>, at the net'],['Aim','Hold a direction as you hit'],['Pause','<kbd>P</kbd>']];
   $('keys').innerHTML=$('keys2').innerHTML=keyRows.map(r=>'<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>').join('');
 }
 applyTouchMode();
@@ -650,7 +659,11 @@ $('touch').hidden=true;
 function doHit(){
   if(demo||paused)return;
   if(state==='serve'){if(serving===home&&serveReadyAt&&now>=pointUntil)humanServe();return;}
-  if(state==='rally'&&ctrl&&now>=ctrl.cd){ctrl.cd=now+.42;ctrl.swingT=.34;ctrl.swing=.3;ctrl.swingKind=(ctrl.y>.1||ball.y-ctrl.y>1.6)?'over':'bump';}
+  if(state==='rally'&&ctrl&&now>=ctrl.cd){
+    const tl=plan&&plan.I?plan.I.t-now:9;
+    if(plan&&plan.team===home&&plan.player===ctrl&&plan.count===2&&plan.h>=3&&ctrl.y<=0&&tl<=1&&tl>-.1){ctrl.auto=plan;ctrl.swingT=tl+.4;ctrl.cd=now+tl+.45;return;}
+    ctrl.cd=now+.5;ctrl.swingT=.45;ctrl.swing=.3;ctrl.swingKind=(ctrl.y>.1||ball.y-ctrl.y>1.6)?'over':'bump';
+  }
 }
 function doJump(){if(demo||paused)return;if(state==='rally'&&ctrl&&ctrl.y<=0&&ctrl.vy===0)ctrl.vy=JUMP;}
 const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down'};
@@ -714,7 +727,7 @@ function boot(data){
 }
 const hot=window.claude&&window.claude.hot;
 if(hot&&hot.snapshot)hot.snapshot(()=>({live:!demo&&state!=='over',diff:diffKey,hs:home.score,as:away.score,hsets:home.sets,asets:away.sets,setNo,srv:serving===away?1:0,log:setLog}));
-window.__sideout={get state(){return state;},get score(){return [home.score,away.score,home.sets,away.sets];},set speed(v){timeScale=v;},step(n){for(let i=0;i<n;i++)update(1/60);},get plan(){return plan;},ball,home,away};
+window.__sideout={get state(){return state;},get score(){return [home.score,away.score,home.sets,away.sets];},set speed(v){timeScale=v;},step(n){for(let i=0;i<n;i++)update(1/60);},get plan(){return plan;},get now(){return now;},get servePow(){return servePow;},get ctrl(){return ctrl;},ball,home,away};
 if(hot&&hot.ready)hot.ready(boot);else boot((hot&&hot.data)||{});
 })();
 </script>

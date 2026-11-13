@@ -78,12 +78,21 @@ This is Chromium emulating an iPad's viewport, touch input and user agent. It is
 | VC-32 | SWR-40 | Inspect the page head and the repository. | Home-screen meta tag, icon link and manifest link present; viewport disables zoom and covers the safe area; manifest and both icons exist. |
 | VC-33 | SWR-33 | Error log. | No uncaught error. |
 
+## F. Scoring balance (scripted players, 150 points per player per level)
+
+[`tests/balance.js`](../tests/balance.js) plays live matches through the real key inputs. The players let the game walk them to the ball and press Hit when it is in reach; they do not block. "Careful" times every touch and holds a random left or right direction through every set and attack. "Casual" misses one touch in twelve, presses up to 0.1 s late and never aims. "Beginner" misses one touch in five and presses up to 0.2 s late.
+
+| ID | Verifies | Check | Pass criterion |
+|---|---|---|---|
+| VC-34 | SWR-42, SWR-43, SWR-45 | Careful player's share of points against Rookie. | 60 % or more. Holding a direction must not cost the rally. |
+| VC-35 | SWR-45 | Casual and beginner players' share against Rookie. | Casual 50 % or more, beginner 30 % or more. |
+| VC-36 | SWR-05, SWR-44, SWR-45 | Shares across the three levels. | Careful: Rookie > Pro > All-Star. Casual: Rookie > All-Star. |
+
 ## Requirements with no verification case
 
 | Requirement | Why |
 |---|---|
 | SWR-02 court geometry and appearance | Needs visual judgement. Screenshots were looked at during development but nothing is asserted. |
-| SWR-05 opponent levels | No case compares the three levels. |
 | SWR-07 control switching and marker | Not asserted. |
 | SWR-10 contact window limits | Only the serve and the Hit button are exercised; the distance and timing limits are not probed. |
 | SWR-11 contact types | Exercised only through the computer's play in section B; the outcome of each type is not asserted. |

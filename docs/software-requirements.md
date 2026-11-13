@@ -18,10 +18,12 @@ Derived from [system-requirements.md](system-requirements.md). The "Trace" colum
 | ID | Requirement | Trace |
 |---|---|---|
 | SWR-07 | The user shall control one player at a time. While the ball is to be played by the user's side, control goes to the player chosen to play it; otherwise it goes to the front-row player nearest the opponents' attack. The controlled player shall be marked. | SYS-04 |
-| SWR-08 | Direction input (WASD, arrow keys, or the touch stick) shall move the controlled player. With no direction input, the controlled player shall walk to the predicted contact point unaided. | SYS-04, SYS-10 |
+| SWR-08 | Direction input (WASD, arrow keys, or the touch stick) shall move the controlled player. With no direction input, the controlled player shall walk to the predicted contact point unaided at full speed. | SYS-04, SYS-10 |
+| SWR-42 | Once the controlled player is within 1.1 of the contact point with less than 0.8 s to the ball's arrival, or while a hit is pending, direction input shall only aim and shall not move the player. | SYS-04, SYS-15 |
 | SWR-09 | Jump input (Space or the Jump button) shall make the controlled player jump when they are on the floor during a rally. | SYS-04, SYS-10 |
-| SWR-10 | Hit input (J, Enter or the Hit button) shall open a 0.34 s contact window. The player contacts the ball if, inside that window, the ball is on their side, within 1.25 horizontally and between 0.15 and 2.65 above their feet. | SYS-04, SYS-10 |
+| SWR-10 | Hit input (J, Enter or the Hit button) shall open a 0.45 s contact window. The player contacts the ball if, inside that window, the ball is on their side, within 1.45 horizontally (1.25 for the computer) and between 0.15 and 2.65 above their feet. | SYS-04, SYS-10 |
 | SWR-11 | The contact type shall follow the team's touch count: first touch passes toward the setter position, second touch sets to a front-row attack position, third touch sends the ball over. A contact made in the air with the ball at 2.5 or higher shall be a spike. | SYS-04 |
+| SWR-43 | When the third touch is a set at spike height, Hit pressed in the last second before the ball arrives shall make the player jump on time and spike, with no separate Jump input. Jumping with the Jump input first shall still work. | SYS-04, SYS-15 |
 | SWR-12 | The direction held at contact shall aim the ball: left/right choose the set target or the side of the opponents' court; forward/back choose a deep or short attack. | SYS-04 |
 | SWR-13 | For the user's serve, the server shall slide along the baseline with left/right, and a power meter shall sweep back and forth. Hit serves the ball; power sets depth, and power above about 93 % shall send the serve past the baseline. | SYS-04 |
 
@@ -38,6 +40,8 @@ Derived from [system-requirements.md](system-requirements.md). The "Trace" colum
 | SWR-20 | A set shall be won by the first team to reach 15 points with a lead of at least two. | SYS-03 |
 | SWR-21 | The match shall be won by the first team to win two sets. The first server shall alternate from set to set. | SYS-03 |
 | SWR-22 | Players shall stay in their own half, at least 0.45 from the centre line. | SYS-03 |
+| SWR-44 | Against a spike, the computer's chosen defender shall wait a reaction time before moving (0.32 s Rookie, 0.22 s Pro, 0.13 s All-Star) and shall have a dig reach of 0.95, 1.1 and 1.25 respectively. | SYS-05, SYS-15 |
+| SWR-45 | Scripted players that use only the key inputs shall win, against Rookie, at least 60 % of points when timing every touch and holding a direction to aim, at least 50 % when missing one touch in twelve, and at least 30 % when missing one touch in five. Win rate shall fall from Rookie to All-Star. | SYS-15 |
 | SWR-23 | The computer shall play its side with the same contact rules as the user: receive, set, attack, serve, block, and leave balls it judges to be going out. | SYS-01 |
 
 ## Display, flow and audio

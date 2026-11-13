@@ -18,8 +18,10 @@ Touch controls appear automatically: a stick under your left thumb, Hit and Jump
 |---|---|---|
 | Move | WASD or arrows | Left stick |
 | Hit / serve | J or Enter | Hit button |
-| Jump | Space | Jump button |
+| Block (jump) | Space | Jump button |
 | Aim | Hold a direction as you hit | Hold the stick as you hit |
+
+On an attack, Hit alone makes your player jump and spike. Press it as the floor ring turns green.
 | Pause | P | Pause button |
 
 ## Documentation
@@ -29,4 +31,4 @@ Touch controls appear automatically: a stick under your left thumb, Hit and Jump
 - [Software verification cases](docs/verification-cases.md)
 - [Software verification results](docs/verification-results.md)
 
-The verification cases are automated in `tests/verify.js`.
+The verification cases are automated in `tests/verify.js`; `tests/balance.js` measures how often scripted players win points at each level.

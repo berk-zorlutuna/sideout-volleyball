@@ -185,7 +185,15 @@ async function serveAt(page, lo, hi) {
   await ctx.close();
 
   await browser.close();
-  const out = { date: new Date().toISOString(), browser: 'Chromium ' + browser.version(), soak, results };
+
+  /* ---- scoring balance: scripted players using the real key inputs (see tests/balance.js) ---- */
+  const bal = await require('./balance.js').run(150, { careful: require('./balance.js').PROFILES.careful, casual: require('./balance.js').PROFILES.casual, beginner: require('./balance.js').PROFILES.beginner });
+  const pct = (pr, lv) => { const r = bal.find(x => x.profile === pr && x.level === lv); return Math.round(100 * r.won / (r.won + r.lost)); };
+  const row = pr => ['dRookie', 'dPro', 'dStar'].map(l => pct(pr, l) + '%').join(' / ');
+  rec('VC-34', pct('careful', 'dRookie') >= 60, 'aiming player (holds a direction on every set and attack), Rookie / Pro / All-Star: ' + row('careful'));
+  rec('VC-35', pct('casual', 'dRookie') >= 50 && pct('beginner', 'dRookie') >= 30, 'casual: ' + row('casual') + '; beginner: ' + row('beginner'));
+  rec('VC-36', pct('careful', 'dRookie') > pct('careful', 'dPro') && pct('careful', 'dPro') > pct('careful', 'dStar') && pct('casual', 'dRookie') > pct('casual', 'dStar'), 'win rate falls from Rookie to All-Star');
+  const out = { date: new Date().toISOString(), browser: 'Chromium ' + browser.version(), soak, balance: bal, results };
   if (process.env.RESULTS) fs.writeFileSync(process.env.RESULTS, JSON.stringify(out, null, 2));
   const failed = results.filter(r => r.result !== 'PASS').length;
   console.log(`${results.length - failed}/${results.length} passed`);

@@ -24,6 +24,7 @@ Product: Sideout Volleyball (`index.html`). These are the top-level requirements
 | SYS-11 | The system shall be usable on viewports from 400 px wide (phone) to desktop size. |
 | SYS-12 | The system shall run without uncaught script errors. |
 | SYS-13 | The system should hold 30 frames per second or better on a typical current laptop or phone. |
+| SYS-15 | A user who times most touches correctly shall be able to win points regularly against the easiest opponent, and the opponent levels shall be progressively harder. |
 | SYS-14 | The system shall be playable on an Apple iPad in Safari, by touch alone, in landscape and portrait, and shall be installable to the iPad home screen as a full-screen app. |
 
 ## Operating environment
