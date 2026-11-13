@@ -1,6 +1,6 @@
 # Software Verification Results
 
-Result: **36 of 36 cases passed.** This is the third recorded run, made after the scoring fix described below. Twelve requirements have no case or only a partial one and remain unverified; see the end of this page.
+Result: **36 of 36 cases passed.** This is the third recorded run, made after the scoring fix described below. Thirteen requirements have no case or only a partial one and remain unverified; see the end of this page.
 
 The game has not been run on a real iPad or in Safari, and it has not been played by a person. The iPad cases use Chromium emulating an iPad, and the scoring cases use scripted players.
 
